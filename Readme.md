@@ -2,6 +2,15 @@
 
 Bem-vindo ao repositório do **QA Tech Week - Primeira Edição**! Aqui você encontrará as instruções para configurar o ambiente, subir os serviços necessários e rodar os testes automatizados com Playwright.
 
+## Dados de Teste
+Acessar Aplicação:
+- usuário: 000000141-41
+- senha: 147258
+
+Acessar BD PD Admin
+- usuário: dba@pgadmin.com
+- senha:dba
+
 ## 📌 Pré-requisitos
 Antes de começar, certifique-se de ter os seguintes softwares instalados em seu sistema:
 
