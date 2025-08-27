@@ -1,56 +1,49 @@
 import { test, expect } from '@playwright/test';
 import { obterCodigo2FA } from '../support/db';
-
-const url = 'http://paybank-mf-auth:3000/';
+import { LoginPage } from '../pages/LoginPage';
+import { DashPage } from '../pages/DashPage';
 
 test('Não deve Logar quando o Código de Autenticação é Inválido', async ({ page }) => {
 
+  const loginPage = new LoginPage(page);
+  
   const usuario ={
     cpf:    '00000014141',
     senha:  '147258'
   } 
-  await page.goto(url);
 
-  await page.getByRole('textbox', { name: 'Digite seu CPF' }).fill(usuario.cpf);
-  await page.getByRole('button', { name: 'Continuar' }).click();
+  await loginPage.acessarPagina();
+  await loginPage.preencherCPF(usuario.cpf);
+  await loginPage.clicarContinuar();
 
-  await page.getByRole('heading', { name: 'Informe sua senha' }).isVisible();
-  for (const digito of usuario.senha) {
-    await page.getByRole('button', { name: digito }).click();
-  }
-  await page.getByRole('button', { name: 'Continuar' }).click();
-
-  await page.getByRole('heading', { name: 'Verificação em duas etapas' }).isVisible();
-  await page.getByRole('textbox', { name: '000000' }).fill('123456');
-  await page.getByRole('button', { name: 'Verificar' }).click();
-  
-  await expect(page.locator('span')).toContainText('Código inválido. Por favor, tente novamente.');
+  await loginPage.preencherSenha(usuario.senha);
+  await loginPage.escreverCodigoMFA_Errado();
+  await expect(page.locator('//span[text()="Código inválido. Por favor, tente novamente."]')).toBeVisible();
 });
 
 test('Deve acessar a conta do usuário', async ({ page }) => {
 
+  const loginPage = new LoginPage(page);
+  const dashPage = new DashPage(page);  
+
   const usuario ={
     cpf:    '00000014141',
     senha:  '147258'
   } 
-  await page.goto(url);
+  await loginPage.acessarPagina();
+  await loginPage.preencherCPF(usuario.cpf);
+  await loginPage.clicarContinuar();
 
-  await page.getByRole('textbox', { name: 'Digite seu CPF' }).fill(usuario.cpf);
-  await page.getByRole('button', { name: 'Continuar' }).click();
-
-  await page.getByRole('heading', { name: 'Informe sua senha' }).click();
-  for (const digito of usuario.senha) {
-    await page.getByRole('button', { name: digito }).click();
-  }
-  await page.getByRole('button', { name: 'Continuar' }).click();
-
-  await page.getByRole('heading', { name: 'Verificação em duas etapas' }).isVisible();
+  await loginPage.preencherSenha(usuario.senha);
 
   // temp
   await page.waitForTimeout(1000);
-  const code = await obterCodigo2FA()
-  await page.getByRole('textbox', { name: '000000' }).fill(code);
-  await page.getByRole('button', { name: 'Verificar' }).click();
+  const codigo = await obterCodigo2FA();
+  await loginPage.escreverCodigoMFA(codigo);
 
-  await expect(page.locator('//div/h2[text()="Saldo disponível"]')).toContainText('Saldo disponível');
+  // temp
+  await page.waitForTimeout(1000);
+  await expect(page.locator('//div/h2[text()="Saldo disponível"]')).toBeVisible();
+
+  expect(await dashPage.obterSaldo()).toHaveText('R$ 5.000,00');
 });
